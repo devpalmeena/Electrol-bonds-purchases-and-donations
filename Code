@@ -1,0 +1,53 @@
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Spacer
+from reportlab.lib import colors
+import pandas as pd
+
+# Read the CSV file into a pandas DataFrame (replace '/content/Parti.csv' with your CSV path)
+df = pd.read_csv('/content/Parti.csv')
+
+# Group the data by 'Name of the Political Party' and calculate the total received amount for each party
+party_receipts = df.groupby('Name of the Political Party')['Denomination'].sum()
+
+# Convert the total received amount from rupees to crore
+party_receipts_in_crore = party_receipts / 10_000_000
+
+# Sort the parties based on their total received amounts in descending order
+party_receipts_sorted = party_receipts_in_crore.sort_values(ascending=False)
+
+# Calculate the total sum of received amounts
+total_received_sum = party_receipts_in_crore.sum()
+
+# Create a list of tuples for the table data
+table_data = [('Sr. No.', 'Name of the Political Party', 'Total Received Amount (Crore Rupees)')]
+for i, (party, receipt_amount) in enumerate(party_receipts_sorted.items(), start=1):
+    table_data.append((i, party, f' {receipt_amount:.2f}'))  # Format receipt amount with two decimal places
+
+# Add a row for the total sum at the end of the table
+table_data.append(('', 'Total Sum of Received Amounts', f'{total_received_sum:.2f}'))
+
+# Create a PDF file
+pdf_filename = 'received_list_table_with_sum.pdf'
+doc = SimpleDocTemplate(pdf_filename, pagesize=letter)
+
+# Create a table and populate it with the data
+table = Table(table_data)
+
+# Define style for the table
+style = TableStyle([
+    ('BACKGROUND', (0, 0), (-1, 0), colors.black),
+    ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+    ('ALIGN', (0, 0), (-1, -1), 'LEFT'),  # Change 'Left' to a valid justification value
+    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+    ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+    ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+    ('GRID', (0, 0), (-1, -1), 1, colors.black)
+])
+
+# Apply style to the table
+table.setStyle(style)
+
+# Add the table to the PDF
+doc.build([table])
+
+print(f"PDF file '{pdf_filename}' has been generated.")
