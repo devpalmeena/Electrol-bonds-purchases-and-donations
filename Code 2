@@ -1,0 +1,44 @@
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.lib import colors
+
+import pandas as pd
+
+# Read the CSV file into a pandas DataFrame
+df = pd.read_csv('/content/comp.csv')
+
+# Group the data by 'Purchaser Name' and calculate the total purchase amount for each purchaser
+purchaser_purchases = df.groupby('Purchaser Name')['Denomination'].sum()
+
+# Sort the purchasers based on their total purchase amounts in descending order
+purchaser_purchases_sorted = purchaser_purchases.sort_values(ascending=False)
+
+# Create a list of tuples for the table data
+table_data = [('Sr. No.', 'Name of purchager', 'Total Purchase Amount (Rupees)')]
+for i, purchaser, purchase_amount in zip(range(1, len(purchaser_purchases_sorted) + 1), purchaser_purchases_sorted.index, purchaser_purchases_sorted.values):
+    table_data.append((i, purchaser, f' {purchase_amount}'))
+# Create a PDF file
+pdf_filename = 'purchager.pdf'
+doc = SimpleDocTemplate(pdf_filename, pagesize=letter)
+
+# Create a table and populate it with the data
+table = Table(table_data)
+
+# Define style for the table
+style = TableStyle([
+    ('BACKGROUND', (0, 0), (-1, 0), colors.black),
+    ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+    ('ALIGN', (0, 0), (-1, -1), 'LEFT'),  # Change 'Left' to a valid justification value
+    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+    ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+    ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+    ('GRID', (0, 0), (-1, -1), 1, colors.black)
+])
+
+# Apply style to the table
+table.setStyle(style)
+
+# Add the table to the PDF
+doc.build([table])
+
+print(f"PDF file '{pdf_filename}' has been generated.")
